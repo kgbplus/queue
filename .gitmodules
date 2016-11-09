@@ -1,0 +1,3 @@
+[submodule "max7219"]
+	path = max7219
+	url = git://github.com/rm-hull/max7219.git
