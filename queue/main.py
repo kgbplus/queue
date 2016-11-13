@@ -103,7 +103,7 @@ class QueueServer(object):
 	def __init__(self):
 		pass
 	
-	def _comm(self, values):
+	def __comm(self, values):
 		try:
 			data = urllib.urlencode(values)
 			req = urllib2.Request(URL, data)
@@ -119,14 +119,14 @@ class QueueServer(object):
 		ans = self._comm({'device_id' : DEVICE_ID, 'task' : 'req'})
 		if ans != None:
 			id = ans.read()
-			self._comm({'device_id' : DEVICE_ID, 'task' : 'ack', 'id' : id})
+			self.__comm({'device_id' : DEVICE_ID, 'task' : 'ack', 'id' : id})
 			return id
 		else:
 			return None
 	
 	def job_start(self,id):
 		print("job start:id sent")
-		ans = self._comm({'device_id' : DEVICE_ID, 'task' : 'job_start', 'id' : id})
+		ans = self.__comm({'device_id' : DEVICE_ID, 'task' : 'job_start', 'id' : id})
 		if ans != None:
 			if ans.read() == "OK":
 				return True
@@ -134,7 +134,7 @@ class QueueServer(object):
 	
 	def job_end(self,id):
 		print("job end:id sent")
-		ans = self._comm({'device_id' : DEVICE_ID, 'task' : 'job_end', 'id' : id})
+		ans = self.__comm({'device_id' : DEVICE_ID, 'task' : 'job_end', 'id' : id})
 		if ans != None:
 			if ans.read() == "OK":
 				return True
@@ -169,32 +169,34 @@ class ButtonObject(object):
 	"""
 	
 	def __init__(self):
-		self.s_pressed = False
-		self.e_pressed = False
+		self.start_pressed = False
+		self.end_pressed = False
 		GPIO.setup(BUT_START, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 		GPIO.setup(BUT_END, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 		GPIO.add_event_detect(BUT_START, GPIO.RISING, callback = self.gpio_callback, bouncetime = BOUNCE)
 		GPIO.add_event_detect(BUT_END, GPIO.RISING, callback = self.gpio_callback, bouncetime = BOUNCE)
 		
+	@property	
 	def start_pressed(self):
-		if self.s_pressed:
-			self.s_pressed = False
-			return True
-		else:
-			return False
-		
-	def end_pressed(self):
-		if self.e_pressed:
-			self.e_pressed = False
+		if self.start_pressed:
+			self.start_pressed = False
 			return True
 		else:
 			return False
 	
+	@property	
+	def end_pressed(self):
+		if self.end_pressed:
+			self.end_pressed = False
+			return True
+		else:
+			return False
+		
 	def gpio_callback(self,channel):
 		if channel == BUT_START:
-			self.s_pressed = True
+			self.start_pressed = True
 		elif channel == BUT_END:
-			self.e_pressed = True		
+			self.end_pressed = True		
 	
 def main(args):
 	try:
@@ -215,7 +217,7 @@ def main(args):
 		
 			indicator.set('{0:03d}'.format(id))
 		
-			while not but.start_pressed():
+			while not but.start_pressed:
 				sleep(.01)
 			
 			if server.job_start(id):
@@ -224,7 +226,7 @@ def main(args):
 				led.flash()
 				led.on()
 			
-			while not but.end_pressed():
+			while not but.end_pressed:
 				sleep(.01)
 		
 			if server.job_end(id):
